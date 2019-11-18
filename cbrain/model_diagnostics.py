@@ -15,7 +15,8 @@ import yaml
 
 
 class ModelDiagnostics():
-    def __init__(self, config_fn, data_fn, nlat=64, nlon=128, nlev=30, ntime=48):
+    #was previously 64, 128, 48 - not sure where the 48 comes from but 64, 128 were lat, lon dims in SPCAM3
+    def __init__(self, config_fn, data_fn, nlat=96, nlon=144, nlev=30, ntime=48):
 
         self.nlat, self.nlon = nlat, nlon
         self.ngeo = nlat * nlon

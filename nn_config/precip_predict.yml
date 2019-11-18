@@ -1,5 +1,5 @@
 # Example training configuration file
-exp_name: 006_8col_pnas_exact
+exp_name: precip_predict
 #change for Green Planet
 #data_dir: /local/S.Rasp/preprocessed_data/
 data_dir: /fast/gmooers/Preprocessed_Data/Very_Small_data/
