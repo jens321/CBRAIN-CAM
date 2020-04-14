@@ -14,7 +14,8 @@ logging.basicConfig(
 
 def fast_shuffle(orig_ds, shuffle_ds, chunk_size):
     # Try shuffling in batches that fit into RAM
-    n_samples = orig_ds.dimensions['sample'].size
+    #n_samples = orig_ds.dimensions['sample'].size
+    n_samples = orig_ds.dimensions['time'].size
     n_chunks = int(np.ceil(n_samples / float(chunk_size)))
 
     for i in tqdm(range(n_chunks)):
@@ -22,12 +23,10 @@ def fast_shuffle(orig_ds, shuffle_ds, chunk_size):
         stop_idx = np.min([(i+1) * chunk_size, n_samples])
         rand_idxs = np.arange(stop_idx - start_idx)
         np.random.shuffle(rand_idxs)
-        
-        print('start test')
         print(' ')
+        print(' ')
+        print('ds.vars')
         print(orig_ds.variables)
-        print(' ')
-        print('end test')
         chunk = orig_ds.variables['vars'][start_idx:stop_idx]
         chunk = chunk[rand_idxs]
         shuffle_ds.variables['vars'][start_idx:stop_idx] = chunk

@@ -61,7 +61,7 @@ def main(args):
         valid_gen = None
 
     logging.info('Build model')
-    model = fc_model(
+    model = log_model(
         input_shape=train_gen.n_inputs,
         output_shape=train_gen.n_outputs,
         hidden_layers=args.hidden_layers,

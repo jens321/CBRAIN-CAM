@@ -41,4 +41,85 @@ def fc_model(input_shape, output_shape, hidden_layers, activation, conservation_
 
     return tf.keras.models.Model(inp, out)
 
+def relu_model(input_shape, output_shape, hidden_layers, activation, conservation_layer=False,
+             inp_sub=None, inp_div=None, norm_q=None):
+    inp = Input(shape=(input_shape,))
 
+    # First hidden layer
+    x = Dense(hidden_layers[0])(inp)
+    x = act_layer(activation)(x)
+
+    # Remaining hidden layers
+    for h in hidden_layers[1:]:
+        x = Dense(h)(x)
+        x = act_layer(activation)(x)
+    
+    
+    if conservation_layer:
+        x = SurRadLayer(inp_sub, inp_div, norm_q)([inp, x])
+        x = MassConsLayer(inp_sub, inp_div, norm_q)([inp, x])
+        out = EntConsLayer(inp_sub, inp_div, norm_q)([inp, x])
+
+    else:
+        out = Dense(output_shape)(x)
+        activation = 'relu'
+        out = act_layer(activation)(out)
+
+    return tf.keras.models.Model(inp, out)
+
+
+def relu_model(input_shape, output_shape, hidden_layers, activation, conservation_layer=False,
+             inp_sub=None, inp_div=None, norm_q=None):
+    inp = Input(shape=(input_shape,))
+
+    # First hidden layer
+    x = Dense(hidden_layers[0])(inp)
+    x = act_layer(activation)(x)
+
+    # Remaining hidden layers
+    for h in hidden_layers[1:]:
+        x = Dense(h)(x)
+        x = act_layer(activation)(x)
+    
+    
+    if conservation_layer:
+        x = SurRadLayer(inp_sub, inp_div, norm_q)([inp, x])
+        x = MassConsLayer(inp_sub, inp_div, norm_q)([inp, x])
+        out = EntConsLayer(inp_sub, inp_div, norm_q)([inp, x])
+
+    else:
+        out = Dense(output_shape)(x)
+        activation = 'relu'
+        out = act_layer(activation)(out)
+
+    return tf.keras.models.Model(inp, out)
+
+def custom_activation(z):
+    y = z**10
+    return y
+
+def log_model(input_shape, output_shape, hidden_layers, activation, conservation_layer=False,
+             inp_sub=None, inp_div=None, norm_q=None):
+    inp = Input(shape=(input_shape,))
+
+    # First hidden layer
+    x = Dense(hidden_layers[0])(inp)
+    x = act_layer(activation)(x)
+
+    # Remaining hidden layers
+    for h in hidden_layers[1:]:
+        x = Dense(h)(x)
+        x = act_layer(activation)(x)
+    
+    
+    if conservation_layer:
+        x = SurRadLayer(inp_sub, inp_div, norm_q)([inp, x])
+        x = MassConsLayer(inp_sub, inp_div, norm_q)([inp, x])
+        out = EntConsLayer(inp_sub, inp_div, norm_q)([inp, x])
+
+    else:
+        out = Dense(output_shape)(x)
+        activation = activation = custom_activation
+        out = act_layer(activation)(out)
+
+    return tf.keras.models.Model(inp, out)

@@ -1,0 +1,15 @@
+# Describe this dataset
+vars : [CRM_W]
+
+in_dir : /DFS-L/DATA/pritchard/gmooers/Workflow/MAPS/SPCAM/Small_Sample/New_SPCAM5/archive/TimestepOutput_Neuralnet_SPCAM_216/atm/hist
+in_fns : TimestepOutput_Neuralnet_SPCAM_216.cam.h1.2008-10-11-00000.nc
+
+out_dir: /fast/gmooers/Preprocessed_Data/Small_W_MAPS/
+out_fn: 000_train.nc
+
+val_in_fns: TimestepOutput_Neuralnet_SPCAM_216.cam.h1.2008-10-12-00000.nc
+val_out_fn: 000_valid.nc
+
+norm_fn: 000_norm.nc
+
+SPCAM_v: 5
