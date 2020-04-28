@@ -15,6 +15,7 @@ from keras import backend as K
 from keras.models import Model
 from keras.losses import binary_crossentropy, mse
 from keras.utils import plot_model
+from keras.callbacks import ModelCheckpoint
 
 class Sampling(keras.layers.Layer):
     def call(self, inputs):
@@ -257,7 +258,7 @@ def plot_training_losses(h, id):
 
     epochs = range(1, len(train_reconstruction_losses) + 1)
 
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12.8, 9.6))
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12.8, 4.8))
 
     # Plot combined loss 
     ax1.plot(epochs, total_train_losses, 'b', label='Train')
@@ -319,6 +320,7 @@ def main():
 
     # Compile model 
     vae.compile(
+        # loss=reconstruction, 
         loss=kl_reconstruction_loss(encoder_result.z_mean, encoder_result.z_log_var), 
         optimizer=optimizer, 
         metrics=[reconstruction, kl(encoder_result.z_mean, encoder_result.z_log_var), kl_reconstruction_loss(encoder_result.z_mean, encoder_result.z_log_var)]
@@ -331,6 +333,14 @@ def main():
     print("train data shape", train_data.shape)
     print("test data shape", test_data.shape)
 
+    checkpoint = ModelCheckPoint(
+        './models/model_{}.th'.format(args.id), 
+        monitor='val_loss', 
+        verbose=1,
+        save_best_only=True ,
+        save_weights_only=True
+    )
+
     h = vae.fit(
         x=train_data, 
         y=train_data, 
@@ -338,8 +348,6 @@ def main():
         batch_size=model_config["batch_size"], 
         validation_data=[test_data, test_data]
     )
-
-    vae.save_weights('./models/model_{}.th'.format(args.id))
 
     plot_training_losses(h, args.id)
 
