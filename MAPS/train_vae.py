@@ -25,7 +25,7 @@ class Sampling(keras.layers.Layer):
         mean, log_var = inputs
         return K.random_normal(tf.shape(log_var)) * K.exp(log_var/2) + mean
 
-def kl_reconstruction_loss(z_log_var, z_mean):
+def kl_reconstruction_loss(z_log_var, z_mean, kl_weight):
     def _kl_reconstruction_loss(true, pred):
         """
         TODO 
@@ -33,29 +33,28 @@ def kl_reconstruction_loss(z_log_var, z_mean):
         true = tf.reshape(true, [-1, 128 * 30])
 
         x_mu = pred[:, :128*30]
-        x_var = pred[:, 128*30:]
+        x_log_var = pred[:, 128*30:]
 
         # Gaussian reconstruction loss
-        mse = -0.5 * K.sum(K.square(true - x_mu)/K.exp(x_var), axis=1)
-        var_trace = -0.5 * K.sum(x_var, axis=1)
+        mse = -0.5 * K.sum(K.square(true - x_mu)/K.exp(x_log_var), axis=1)
+        var_trace = -0.5 * K.sum(x_log_var, axis=1)
         log2pi = -0.5 * 128 * 30 * np.log(2 * np.pi)
         
         log_likelihood = mse + var_trace + log2pi
         print("log likelihood shape", log_likelihood.shape)
 
-        reconstruction_loss = K.mean(-log_likelihood)
+        # NOTE: We don't take a mean here, since we first want to add the KL term
+        reconstruction_loss = -log_likelihood
 
         # KL divergence loss
         kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
-        kl_loss = K.sum(kl_loss, axis=-1)
+        kl_loss = K.sum(kl_loss, axis=1)
         kl_loss *= -0.5
 
         # Total loss = 50% rec + 50% KL divergence loss
         # NOTE: On ruihan's advice, I will weight KL down
-        # kl_weight = 0.1
-        # return K.mean(reconstruction_loss + kl_weight * kl_loss)
 
-        return K.mean(reconstruction_loss + kl_loss)
+        return K.mean(reconstruction_loss + kl_weight * kl_loss)
 
     return _kl_reconstruction_loss
 
@@ -67,7 +66,8 @@ def kl(z_log_var, z_mean):
         kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
         kl_loss = K.sum(kl_loss, axis=-1)
         kl_loss *= -0.5
-        return kl_loss
+        # kl_loss = K.print_tensor(kl_loss, message='EULA PEULA')
+        return K.mean(kl_loss)
     
     return _kl
 
@@ -106,51 +106,22 @@ def encoder_gen(input_shape: tuple, encoder_config: dict):
     print("shape of input after padding", inputs.shape)
     z = keras.layers.convolutional.Conv2D(
         encoder_config["conv_1"]["filter_num"], 
-        encoder_config["conv_1"]["kernel_size"], 
+        tuple(encoder_config["conv_1"]["kernel_size"]), 
         padding='same', 
         activation=encoder_config["activation"], 
         strides=encoder_config["conv_1"]["stride"]
     )(zero_padded_inputs)
-
     print("shape after first convolutional layer", z.shape)
-    z = keras.layers.MaxPooling2D(
-        encoder_config["max_pool_1"]["pool_size"], 
-        encoder_config["max_pool_1"]["pool_stride"], 
-        padding='same'
-    )(z)
 
-    print("shape after first pooling layer", z.shape)
     z = keras.layers.convolutional.Conv2D(
         encoder_config["conv_2"]["filter_num"], 
-        encoder_config["conv_2"]["kernel_size"], 
+        tuple(encoder_config["conv_2"]["kernel_size"]), 
         padding='same', 
         activation=encoder_config["activation"], 
         strides=encoder_config["conv_2"]["stride"]
-    )(zero_padded_inputs)
+    )(z)
 
     print("shape after second convolutional layer", z.shape)
-    z = keras.layers.MaxPooling2D(
-        encoder_config["max_pool_2"]["pool_size"], 
-        encoder_config["max_pool_2"]["pool_stride"], 
-        padding='same'
-    )(z)
-
-    print("shape after second pooling layer", z.shape)
-    z = keras.layers.convolutional.Conv2D(
-        encoder_config["conv_3"]["filter_num"], 
-        encoder_config["conv_3"]["kernel_size"], 
-        padding='same', 
-        activation=encoder_config["activation"], 
-        strides=encoder_config["conv_3"]["stride"]
-    )(zero_padded_inputs)
-
-    print("shape after third convolutional layer", z.shape)
-    z = keras.layers.MaxPooling2D(
-        encoder_config["max_pool_3"]["pool_size"], 
-        encoder_config["max_pool_3"]["pool_stride"], 
-        padding='same'
-    )(z)
-    print("shape after third pooling layer", z.shape)
     
     shape_before_flattening = K.int_shape(z) 
 
@@ -196,45 +167,43 @@ def decoder_gen(
 
     x = keras.layers.Conv2DTranspose(
         decoder_config["conv_t_1"]["filter_num"], 
-        decoder_config["conv_t_1"]["kernel_size"], 
+        tuple(decoder_config["conv_t_1"]["kernel_size"]), 
         padding='same', 
         activation=decoder_config["activation"], 
         strides=decoder_config["conv_t_1"]["stride"]
     )(x)
     print("shape after first convolutional transpose layer", x._keras_shape)
 
-    x = keras.layers.Conv2DTranspose(
-        decoder_config["conv_t_2"]["filter_num"], 
-        decoder_config["conv_t_2"]["kernel_size"], 
+    x_mu = keras.layers.Conv2DTranspose(
+        decoder_config["conv_mu"]["filter_num"], 
+        tuple(decoder_config["conv_mu"]["kernel_size"]), 
         padding='same', 
-        activation=decoder_config["activation"], 
-        strides=decoder_config["conv_t_2"]["stride"]
+        strides=decoder_config["conv_mu"]["stride"],
+        activation=decoder_config["conv_mu"]["activation"]
     )(x)
-    print("shape after second convolutional transpose layer", x._keras_shape)
+    print("shape after conv mu layer", x_mu._keras_shape)
 
-    x = keras.layers.Conv2DTranspose(
-        decoder_config["conv_t_3"]["filter_num"], 
-        decoder_config["conv_t_3"]["kernel_size"], 
-        padding='same', 
-        activation=decoder_config["activation"], 
-        strides=decoder_config["conv_t_3"]["stride"]
-    )(x) 
-    print("shape after third convolutional transpose layer", x._keras_shape)
-
-    x = keras.layers.Conv2DTranspose(
-        decoder_config["conv_t_4"]["filter_num"], 
-        decoder_config["conv_t_4"]["kernel_size"], 
-        padding='same', 
-        activation=decoder_config["activation"]
+    x_log_var = keras.layers.Conv2DTranspose(
+        decoder_config["conv_log_var"]["filter_num"], 
+        tuple(decoder_config["conv_log_var"]["kernel_size"]), 
+        padding='same',  
+        strides=decoder_config["conv_log_var"]["stride"],
+        activation=decoder_config["conv_log_var"]["activation"]
     )(x)
-    print("shape after fourth convolutional transpose layer", x._keras_shape)
+    print("shape after conv log var layer", x_log_var._keras_shape)
 
-    cropped_outputs = keras.layers.Cropping2D(cropping=(1, 0))(x)
-    print("shape after cropping", cropped_outputs._keras_shape)
+    x_mu = keras.layers.Cropping2D(cropping=(1, 0))(x_mu)
+    print("shape after cropping", x_mu._keras_shape)
 
-    x = keras.layers.Flatten()(cropped_outputs)
+    x_log_var = keras.layers.Cropping2D(cropping=(1, 0))(x_log_var)
+    print("shape after cropping", x_log_var._keras_shape)
 
-    x_mu_var = keras.layers.Dense(2 * np.prod(original_input), activation=decoder_config["dense_mu_var"]["activation"])(x)
+    x_mu = keras.layers.Flatten()(x_mu)
+    x_log_var = keras.layers.Flatten()(x_log_var)
+   
+    x_mu_var = keras.layers.Concatenate(axis=1)([x_mu, x_log_var])
+
+    # x_mu_var = keras.layers.Dense(2 * np.prod(original_input), activation=decoder_config["dense_mu_var"]["activation"])(x)
 
     variational_decoder = keras.Model(inputs=[decoder_inputs], outputs=[x_mu_var])
 
@@ -321,9 +290,13 @@ def main():
     # Compile model 
     vae.compile(
         # loss=reconstruction, 
-        loss=kl_reconstruction_loss(encoder_result.z_mean, encoder_result.z_log_var), 
+        loss=kl_reconstruction_loss(encoder_result.z_mean, encoder_result.z_log_var, model_config["kl_weight"]), 
         optimizer=optimizer, 
-        metrics=[reconstruction, kl(encoder_result.z_mean, encoder_result.z_log_var), kl_reconstruction_loss(encoder_result.z_mean, encoder_result.z_log_var)]
+        metrics=[
+            reconstruction, 
+            kl(encoder_result.z_mean, encoder_result.z_log_var), 
+            kl_reconstruction_loss(encoder_result.z_mean, encoder_result.z_log_var, model_config["kl_weight"])
+        ]
     )
     vae.summary()
 
@@ -333,20 +306,22 @@ def main():
     print("train data shape", train_data.shape)
     print("test data shape", test_data.shape)
 
-    checkpoint = ModelCheckPoint(
+    checkpoint = ModelCheckpoint(
         './models/model_{}.th'.format(args.id), 
         monitor='val_loss', 
         verbose=1,
         save_best_only=True ,
         save_weights_only=True
     )
+    callbacks_list = [checkpoint]
 
     h = vae.fit(
         x=train_data, 
         y=train_data, 
         epochs=model_config["train_epochs"], 
         batch_size=model_config["batch_size"], 
-        validation_data=[test_data, test_data]
+        validation_data=[test_data, test_data],
+        callbacks=callbacks_list
     )
 
     plot_training_losses(h, args.id)

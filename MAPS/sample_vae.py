@@ -27,6 +27,13 @@ def sample_reconstructions(vae, train_data, test_data, id):
         sample_mean = sample_mean_var[0, :128*30]
         sample_log_var = sample_mean_var[0, 128*30:]
         recon_sample = np.random.multivariate_normal(sample_mean, np.exp(sample_log_var) * np.identity(128*30))
+        print("original sample", sample.reshape((128*30,)))
+        print("reconstructed sample", recon_sample)
+        print(np.max(np.abs(sample.reshape((128*30,)) - recon_sample)))
+        print("max of reconstructed", np.max(np.abs(recon_sample)))
+        print("max of original", np.max(sample.reshape((128*30,))))
+        print("min of reconstructed", np.min(recon_sample))
+        print("min of original", np.min(sample.reshape((128*30,))))
         recon_sample = recon_sample.reshape((30, 128))
 
         original_samples.append(sample[:, :, 0])
@@ -37,10 +44,10 @@ def sample_reconstructions(vae, train_data, test_data, id):
     for i in range(10): 
         print(i)
         if i % 2 == 0:
-            axs[int(i/2), 0].imshow(original_samples[int(i/2)], cmap='coolwarm')
+            axs[int(i/2), 0].imshow(100*original_samples[int(i/2)], cmap='coolwarm')
             # ax.set_title("Original Sample")
         elif i % 2 == 1:
-            axs[int(i/2), 1].imshow(recon_samples[int(i/2)], cmap='coolwarm')
+            axs[int(i/2), 1].imshow(100*recon_samples[int(i/2)], cmap='coolwarm')
             # ax.set_title("Reconstructed Sample")
 
     plt.savefig('./model_graphs/reconstructed_train_samples_{}.png'.format(id))
