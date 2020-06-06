@@ -1,0 +1,51 @@
+{
+    "id": 4,
+    "optimizer": {
+        "lr": 1e-4
+    }, 
+    "data": {
+        "training_data_path": "../data/W_Half_Deep_Convection/Space_Time_W_Training.npy",
+        "test_data_path": "../data/W_Half_Deep_Convection/Space_Time_W_Test.npy"
+    },
+    "encoder": {
+        "activation": "relu",
+        "latent_dim": 1024,
+        "conv_1": {
+            "filter_num": 64,
+            "kernel_size": [4, 4],
+            "stride": 2
+        },
+        "conv_2": {
+            "filter_num": 128,
+            "kernel_size": [4, 4],
+            "stride": 2
+        },
+        "conv_3": {
+            "filter_num": 512,
+            "kernel_size": [4, 4],
+            "stride": 2
+        }
+    },
+    "decoder": {
+        "latent_dim": 1024,
+        "activation": "relu",
+        "conv_t_1": {
+            "filter_num": 256,
+            "kernel_size": [4, 4],
+            "stride": 2
+        },
+        "conv_t_2": {
+            "filter_num": 64,
+            "kernel_size": [4, 4],
+            "stride": 2
+        },
+        "conv_t_3": {
+            "filter_num": 1,
+            "kernel_size": [4, 4],
+            "stride": 2,
+            "activation": "sigmoid"
+        }
+    },
+    "batch_size": 128,
+    "train_epochs": 60
+}

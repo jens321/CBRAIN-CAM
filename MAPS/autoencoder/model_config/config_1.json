@@ -1,0 +1,44 @@
+{
+    "id": 1,
+    "optimizer": {
+        "lr": 1e-3
+    }, 
+    "data": {
+        "training_data_path": "../data/Space_Time_W_Training.npy",
+        "test_data_path": "../data/Space_Time_W_Test.npy"
+    },
+    "encoder": {
+        "activation": "relu",
+        "latent_dim": 16,
+        "conv_1": {
+            "filter_num": 16,
+            "kernel_size": [32, 7],
+            "stride": 2
+        },
+        "conv_2": {
+            "filter_num": 16,
+            "kernel_size": [16, 7],
+            "stride": 2
+        },
+        "dense_1": {
+            "dim": 200
+        }
+    },
+    "decoder": {
+        "latent_dim": 16,
+        "activation": "relu",
+        "conv_t_1": {
+            "filter_num": 16,
+            "kernel_size": [8, 7],
+            "stride": 2
+        },
+        "conv_t_2": {
+            "filter_num": 1,
+            "kernel_size": [16, 7],
+            "stride": 2,
+            "activation": "sigmoid"
+        }
+    },
+    "batch_size": 128,
+    "train_epochs": 6000
+}

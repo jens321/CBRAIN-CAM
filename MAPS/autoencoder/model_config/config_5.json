@@ -1,0 +1,61 @@
+{
+    "id": 4,
+    "optimizer": {
+        "lr": 1e-3
+    }, 
+    "data": {
+        "training_data_path": "../data/Space_Time_W_Training.npy",
+        "test_data_path": "../data/Space_Time_W_Test.npy"
+    },
+    "encoder": {
+        "activation": "relu",
+        "latent_dim": 32,
+        "conv_1": {
+            "filter_num": 32,
+            "kernel_size": [3, 3],
+            "stride": 2
+        },
+        "conv_2": {
+            "filter_num": 32,
+            "kernel_size": [3, 3],
+            "stride": 1
+        },
+        "conv_3": {
+            "filter_num": 32,
+            "kernel_size": [3, 3],
+            "stride": 2
+        },
+        "conv_4": {
+            "filter_num": 32,
+            "kernel_size": [3, 3],
+            "stride": 1
+        }
+    },
+    "decoder": {
+        "latent_dim": 32,
+        "activation": "relu",
+        "conv_t_1": {
+            "filter_num": 32,
+            "kernel_size": [3, 3],
+            "stride": 1
+        },
+        "conv_t_2": {
+            "filter_num": 32,
+            "kernel_size": [3, 3],
+            "stride": 2
+        },
+        "conv_t_3": {
+            "filter_num": 32,
+            "kernel_size": [3, 3],
+            "stride": 1
+        },
+        "conv_t_4": {
+            "filter_num": 1,
+            "kernel_size": [3, 3],
+            "stride": 2,
+            "activation": "sigmoid"
+        }
+    },
+    "batch_size": 128,
+    "train_epochs": 1000
+}
