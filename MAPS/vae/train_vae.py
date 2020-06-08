@@ -17,6 +17,16 @@ from keras.losses import binary_crossentropy, mse
 from keras.utils import plot_model
 from keras.callbacks import ModelCheckpoint
 
+class AnnealingCallback(keras.callbacks.Callback):
+    def __init__(self, epochs):
+        super(AnnealingCallback, self).__init__()
+        self.epochs = epochs 
+        
+    def on_epoch_begin(self, epoch, logs={}):
+        new_kl_weight = epoch/self.epochs 
+        K.set_value(self.model.kl_weight, new_kl_weight)
+        print("Using updated KL Weight:", K.get_value(self.model.kl_weight))
+
 class Sampling(keras.layers.Layer):
     def call(self, inputs):
         """
@@ -25,7 +35,7 @@ class Sampling(keras.layers.Layer):
         mean, log_var = inputs
         return K.random_normal(tf.shape(log_var)) * K.exp(log_var/2) + mean
 
-def kl_reconstruction_loss(z_log_var, z_mean, kl_weight):
+def kl_reconstruction_loss(z_log_var, z_mean, vae):
     def _kl_reconstruction_loss(true, pred):
         """
         TODO 
@@ -50,11 +60,13 @@ def kl_reconstruction_loss(z_log_var, z_mean, kl_weight):
         kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
         kl_loss = K.sum(kl_loss, axis=1)
         kl_loss *= -0.5
-
+        
         # Total loss = 50% rec + 50% KL divergence loss
         # NOTE: On ruihan's advice, I will weight KL down
 
-        return K.mean(reconstruction_loss + kl_weight * kl_loss)
+        # kl_weight = K.print_tensor(vae.kl_weight, message='EULA PEULA')
+
+        return K.mean(reconstruction_loss + vae.kl_weight * kl_loss)
 
     return _kl_reconstruction_loss
 
@@ -314,10 +326,10 @@ def main():
         model_config["decoder"],
         encoder_result.shape_before_flattening
     )
-
     _, _, z = encoder_result.vae_encoder(encoder_result.inputs)
     x_mu_log_var = vae_decoder(z)
     vae = keras.Model(inputs=[encoder_result.inputs], outputs=[x_mu_log_var])
+    vae.kl_weight = K.variable(model_config["kl_weight"])
 
     # Specify the optimizer 
     optimizer = keras.optimizers.Adam(lr=model_config['optimizer']['lr'])
@@ -328,7 +340,7 @@ def main():
         loss=kl_reconstruction_loss(
             encoder_result.z_log_var, 
             encoder_result.z_mean, 
-            model_config["kl_weight"]
+            vae
         ), 
         optimizer=optimizer, 
         metrics=[
@@ -340,7 +352,7 @@ def main():
             kl_reconstruction_loss(
                 encoder_result.z_log_var, 
                 encoder_result.z_mean, 
-                model_config["kl_weight"]
+                vae
             )
         ]
     )
@@ -352,6 +364,7 @@ def main():
     print("train data shape", train_data.shape)
     print("test data shape", test_data.shape)
 
+
     checkpoint = ModelCheckpoint(
         './models/model_{}.th'.format(args.id), 
         monitor='val_loss', 
@@ -360,6 +373,10 @@ def main():
         save_weights_only=True 
     )
     callbacks_list = [checkpoint]
+
+    if model_config["annealing"]:
+        kl_weight_annealing = AnnealingCallback(model_config["train_epochs"])
+        callbacks_list.append(kl_weight_annealing)
 
     h = vae.fit(
         x=train_data, 

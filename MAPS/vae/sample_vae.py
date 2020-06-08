@@ -162,7 +162,7 @@ def sample_latent_space(vae_encoder, train_data, test_data, id, dataset_min, dat
     z_test_tsne = tsne.fit_transform(z_test_pca)
 
     # Make plot of latent test data 
-    plt.scatter(x=z_test_tsne[:, 0], y=z_test_tsne[:, 1], c=test_labels)
+    plt.scatter(x=z_test_tsne[:, 0], y=z_test_tsne[:, 1], c=test_labels, s=1)
     plt.colorbar()
 
     plt.savefig('./model_graphs/latent_space_with_pca_{}.png'.format(id))

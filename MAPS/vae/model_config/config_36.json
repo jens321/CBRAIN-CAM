@@ -1,0 +1,63 @@
+{
+    "id": 36,
+    "optimizer": {
+        "lr": 1e-4
+    }, 
+    "kl_weight": 0.01,
+    "annealing": true,
+    "data": {
+        "training_data_path": "../data/W_Big_Half_Deep_Convection/Space_Time_W_Training.npy",
+        "test_data_path": "../data/W_Big_Half_Deep_Convection/Space_Time_W_Test.npy",
+        "train_labels": "../data/W_Big_Half_Deep_Convection/Y_Train.npy",
+        "test_labels": "../data/W_Big_Half_Deep_Convection/Y_Test.npy",
+        "max_scalar": "../data/W_Big_Half_Deep_Convection/Space_Time_Max_Scalar.npy",
+        "min_scalar": "../data/W_Big_Half_Deep_Convection/Space_Time_Min_Scalar.npy"
+    },
+    "encoder": {
+        "activation": "relu",
+        "latent_dim": 1024,
+        "conv_1": {
+            "filter_num": 64,
+            "kernel_size": [4, 4],
+            "stride": 2
+        },
+        "conv_2": {
+            "filter_num": 128,
+            "kernel_size": [4, 4],
+            "stride": 2
+        },
+        "conv_3": {
+            "filter_num": 512,
+            "kernel_size": [4, 4],
+            "stride": 2
+        }
+    },
+    "decoder": {
+        "latent_dim": 1024,
+        "activation": "relu",
+        "conv_t_1": {
+            "filter_num": 256,
+            "kernel_size": [4, 4],
+            "stride": 2
+        },
+        "conv_t_2": {
+            "filter_num": 64,
+            "kernel_size": [4, 4],
+            "stride": 2
+        },
+        "conv_mu": {
+            "filter_num": 1,
+            "kernel_size": [4, 4],
+            "stride": 2,
+            "activation": "sigmoid"
+        },
+        "conv_log_var": {
+            "filter_num": 1,
+            "kernel_size": [4, 4],
+            "stride": 2,
+            "activation": "linear"
+        }
+    },
+    "batch_size": 128,
+    "train_epochs": 400
+}
