@@ -64,8 +64,6 @@ def kl_reconstruction_loss(z_log_var, z_mean, vae):
         # Total loss = 50% rec + 50% KL divergence loss
         # NOTE: On ruihan's advice, I will weight KL down
 
-        # kl_weight = K.print_tensor(vae.kl_weight, message='EULA PEULA')
-
         return K.mean(reconstruction_loss + vae.kl_weight * kl_loss)
 
     return _kl_reconstruction_loss

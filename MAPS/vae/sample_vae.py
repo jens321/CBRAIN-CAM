@@ -207,6 +207,7 @@ def sample_latent_space(vae_encoder, train_data, test_data, id, dataset_min, dat
     z_test_tsne = tsne.fit_transform(z_test_pca)
 
     if dataset_type == "half_deep_convection":
+        # Adds some nice formatting when visualizing the "half_deep_convection" latent space
         colors = ["#FF4940", "#3D9AD1"]
 
         # Make plot of latent test data 
@@ -215,6 +216,7 @@ def sample_latent_space(vae_encoder, train_data, test_data, id, dataset_min, dat
         plt.legend()
 
     else:
+        # By default, we just plot everything at once with a generic colorbar 
         plt.scatter(x=z_test_tsne[:, 0], y=z_test_tsne[:, 1], c=test_labels, s=1)
         plt.colorbar()
 
@@ -313,7 +315,11 @@ def main():
     train_data = train_data.reshape(train_data.shape+(1,))
     test_data = test_data.reshape(test_data.shape+(1,))
 
-    # get side by side plots of original vs. reconstructed
+    # ************************************************************************
+    # NOTE: As mentioned in the readme.md, comment in the one you want to run,
+    # and leave the rest commented out 
+    # ************************************************************************
+
     # sample_reconstructions(vae, train_data, test_data, args.id, dataset_max, dataset_min)
     # reconstruct_targets(vae, test_data, [2, 15, 66 , 85, 94], args.id, dataset_max, dataset_min)
     sample_latent_space(encoder_result.vae_encoder, train_data, test_data, args.id, dataset_min, dataset_max, test_labels, args.dataset_type)
