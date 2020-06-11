@@ -14,7 +14,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA 
 from sklearn.manifold import TSNE
 
-from train_vae import encoder_gen, decoder_gen
+from train_fully_conv import encoder_gen, decoder_gen
 
 
 def reconstruct_targets(vae, test_data, targets, id, dataset_max, dataset_min):
@@ -218,7 +218,7 @@ def sample_latent_space(vae_encoder, train_data, test_data, id, dataset_min, dat
         plt.scatter(x=z_test_tsne[:, 0], y=z_test_tsne[:, 1], c=test_labels, s=1)
         plt.colorbar()
 
-    plt.savefig('./model_graphs/latent_space/latent_space_with_pca_var_{}.pdf'.format(id))
+    plt.savefig('./model_graphs/latent_space_with_pca_{}.pdf'.format(id))
 
 def generate_samples(decoder, dataset_min, dataset_max, latent_dim: int, id):
     """
@@ -266,6 +266,8 @@ def generate_samples(decoder, dataset_min, dataset_max, latent_dim: int, id):
     plt.tight_layout()
     plt.savefig('./model_graphs/generated_samples_{}.png'.format(id))
 
+
+
 def main():
     args = argument_parsing()
     print("Command line args:", args)
@@ -298,8 +300,7 @@ def main():
     # Construct VAE Decoder 
     vae_decoder = decoder_gen(
         (img_width, img_height),  
-        model_config["decoder"],
-        encoder_result.shape_before_flattening
+        model_config["decoder"]
     )
 
     _, _, z = encoder_result.vae_encoder(encoder_result.inputs)
@@ -315,8 +316,8 @@ def main():
 
     # get side by side plots of original vs. reconstructed
     # sample_reconstructions(vae, train_data, test_data, args.id, dataset_max, dataset_min)
-    # reconstruct_targets(vae, test_data, [2, 15, 66 , 85, 94], args.id, dataset_max, dataset_min)
-    sample_latent_space(encoder_result.vae_encoder, train_data, test_data, args.id, dataset_min, dataset_max, test_labels, args.dataset_type)
+    reconstruct_targets(vae, test_data, [2, 15, 66 , 85, 94], args.id, dataset_max, dataset_min)
+    # sample_latent_space(encoder_result.vae_encoder, train_data, test_data, args.id, dataset_min, dataset_max, test_labels, args.dataset_type)
     # generate_samples(vae_decoder, dataset_min, dataset_max, model_config["encoder"]["latent_dim"], args.id)
 
 def argument_parsing():
